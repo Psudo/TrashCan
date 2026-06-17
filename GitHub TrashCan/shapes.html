@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang='en-US'><head>
+<title>Area and Perimeter Formulas</title>
+<style>
+body, h1, h2, h3	{ margin:0; }
+h1	{ padding:1ex 1ex 0; }
+canvas	{ float;left; width:145px; height:110px; margin:0.4ex; border:1px solid #DDD;}
+canvas:hover	{ background:#F7F7EE; }
+.pad	{ padding:1ex 2ex; }
+</style>
+<script type='text/javascript'>
+'abs cos PI pow round sin sqrt tan'.split(' ').forEach(function(i){ window[i.toLowerCase()] = Math[i]; });
+rand = Math.random;
+atan = Math.atan2;
+const pi2 = 2 * pi, pih = pi / 2, pi32 = pi + pih, pi116 = pi / 16, pi316 = pi * 3/ 16;
+const pi14 = pi / 4, pi34 = pi * 3 / 4, pi54 = pi * 5 / 4, pi74 = pi * 7 / 4;
+const pi18 = pi / 8, pi38 = pi * 3 / 8, pi58 = pi * 5 / 8, pi78 = pi * 7 / 8;
+Array.prototype.and = function(){
+	var ret = !!this[0];
+	for(var i = 1; i < this.length; i++){
+		ret = ret && this[i];
+	}
+	return !!ret;
+};
+$ = function(id){
+	return document.getElementById(id);
+};
+$$ = function(css){
+	return $A(document.querySelectorAll(css));
+};
+$A = function(list){
+	var ret = [];
+	for(var i = 0; i < list.length; i++){
+		ret[i] = list[i];
+	}
+	return ret;
+};
+ani = {
+	_center					: function(pts){
+		var sumX = 0, sumY = 0;
+		for(const p of pts) {
+			sumX += p[0];
+			sumY += p[1];
+		}
+		return { x: sumX / pts.length, y: sumY / pts.length };
+	},
+	_drift					: function(pts){
+		for(var i = 0; i < pts.length; i++){
+			var pt = pts[i];
+			pt[0] += pt[2];
+			if(pt[0] < 35 || pt[0] > 400){
+				pt[2] = -pt[2];
+			}
+			pt[1] += pt[3];
+			if(pt[1] < 35 || pt[1] > 260){
+				pt[3] = -pt[3];
+			}
+		}
+		return pts;
+	},
+	_post					: function(ctx){
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#000';
+		var text = this.getAttribute('rel');
+		if(!text || '' == text) text = this.getAttribute('id').replace('_', ' ');
+		ctx.fillText(text, 20, 315);
+	},
+	_pre					: function(ctx){
+		ctx.fillStyle = '#EEF';
+		ctx.fillRect(18,20,400,260);
+		ctx.fillStyle = '#FFF';
+		ctx.strokeStyle = '#000';
+		ctx.beginPath();
+		return this.getAttribute('id');
+	},
+	_pts					: function(n){
+		n = abs(round(n)) || 3;
+		var ret = [];
+		for(var i = 0; i < n; i++){
+			var ang = rand() * pi2, rate = rand() * 5 + 0.5;
+			ret[i] = [30 + 375 * rand(), 50 + 210 * rand(), cos(ang) * rate, sin(ang) * rate]
+		}
+		return ret;
+	},
+	_sort					: function(pts){
+		const center = ani._center(pts);
+		return pts.sort(function(a, b){
+			const angleA = atan(a[1] - center.y, a[0] - center.x);
+			const angleB = atan(b[1] - center.y, b[0] - center.x);
+			return angleA - angleB;
+		});
+	},
+	cardioid				: function(ctx){
+		var ang = 0, dis = this;
+		var _cardioid = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.cardioid(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_cardioid, 30);
+		};
+		_cardioid();
+	},
+	Cartesian_oval			: function(ctx){
+		var ang = 0, dis = this;
+		var _Cn_oval = function(){
+			ani._pre.call(dis, ctx);
+			var scale = sin(ang) * 2 + 2.15;
+			drawShape.Cartesian_oval(ctx, ang / pi, 60, 100 / (1 + scale), scale);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_Cn_oval, 30);
+		};
+		_Cn_oval();
+	},
+	chevron					: function(ctx){
+		var ang = 0, dis = this;
+		var _chevron = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.chevron(ctx, 
+				(.1 + .9 * abs(cos(ang * pi))) * 150, 	// thick
+				cos(ang * Math.E),						// slant
+				(.1 + .9 * abs(cos(ang))) * 180);		// width
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_chevron, 30);
+		};
+		_chevron();
+	},
+	circle					: function(ctx){
+		var ang = 0, dis = this;
+		var _circle = function(){
+			var id = ani._pre.call(dis, ctx);
+			drawShape.circle(ctx, (.2 + .8 * abs(sin(ang * pi))) * 100);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_circle, 30);
+		};
+		_circle();
+	},
+	crescent_incomplete		: function(ctx){
+		var ang = 0, dis = this;
+		var _crescent = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.crescent(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_crescent, 30);
+		};
+		_crescent();
+	},
+	hexagon					: function(ctx){
+		ctx.lineWidth = 3;
+		var dis = this, pts = ani._pts(6);
+		var _hexagon = function(){
+			ani._pre.call(dis, ctx);
+			pts = ani._drift(pts);
+			pts = ani._sort(pts);
+			drawShape._showPoints(ctx, pts);
+			for(var i = 0; i < pts.length; i++){
+				ctx[i?'lineTo':'moveTo'](pts[i][0], pts[i][1]);
+			}
+			ani._post.call(dis, ctx);
+			setTimeout(_hexagon, 30);
+		};
+		_hexagon();
+	},
+	kite					: function(ctx){
+		var ang = 0, dis = this;
+		var _kite = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.kite(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_kite, 30);
+		};
+		_kite();
+	},
+	parallelogram			: function(ctx){
+		var ang = 0, dis = this;
+		var _parallelogram = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.parallelogram(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_parallelogram, 30);
+		};
+		_parallelogram();
+	},
+	pentagon				: function(ctx){
+		var dis = this, pts = ani._pts(5);
+		var _penta = function(){
+			ani._pre.call(dis, ctx);
+			pts = ani._drift(pts);
+			pts = ani._sort(pts);
+			drawShape._showPoints(ctx, pts);
+			for(var i = 0; i < pts.length; i++){
+				ctx[i?'lineTo':'moveTo'](pts[i][0], pts[i][1]);
+			}
+			ani._post.call(dis, ctx);
+			setTimeout(_penta, 30);
+		};
+		_penta();
+	},
+	quadrant				: function(ctx){
+		var ang = 0, dis = this;
+		var _quadrant = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.quadrant(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_quadrant, 30);
+		};
+		_quadrant();
+	},
+	quadrilateral			: function(ctx){
+		var dis = this, pts = ani._pts(4);
+		var _quadrilateral = function(){
+			ani._pre.call(dis, ctx);
+			pts = ani._drift(pts);
+			pts = ani._sort(pts);
+			drawShape._showPoints(ctx, pts);
+			for(var i = 0; i < pts.length; i++){
+				ctx[i?'lineTo':'moveTo'](pts[i][0], pts[i][1]);
+			}
+			ani._post.call(dis, ctx);
+			setTimeout(_quadrilateral, 30);
+		};
+		_quadrilateral();
+	},
+	rectangle				: function(ctx){
+		var ang = 0, dis = this;
+		var _rectangle = function(){
+			ani._pre.call(dis, ctx);
+			var c = [cos(ang), cos(ang + pih)];
+			var s = [sin(ang), sin(ang + pih)];
+			var r1 = 80 * (1.0 - 0.45 * (sin(ang * Math.E) + 1));
+			var r2 = 90 * (0.1 + 0.45 * (sin(ang * pi)     + 1));
+			ctx.moveTo(220 + c[0] * r1 + c[1] * r2,	150 + s[0] * r1 + s[1] * r2);
+			ctx.lineTo(220 + c[0] * r1 - c[1] * r2,	150 + s[0] * r1 - s[1] * r2);
+			ctx.lineTo(220 - c[0] * r1 - c[1] * r2,	150 - s[0] * r1 - s[1] * r2);
+			ctx.lineTo(220 - c[0] * r1 + c[1] * r2,	150 - s[0] * r1 + s[1] * r2);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_rectangle, 30);
+		};
+		_rectangle();
+	},
+	regular_polygon			: function(ctx){
+		var ang = 0, dis = this, n = 4;
+		var _reg = function(){
+			var id = ani._pre.call(dis, ctx);
+			drawShape.n_gon(ctx, n, ang, (.2 + .8 * abs(sin(ang * pi))) * 100);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			if(ang > 1){
+				ang -= 1;
+				if(rand() > 0.6 - (n / 50)){ n--; } else { n++; }
+				if(2 == n) n = 4;
+			}
+			setTimeout(_reg, 30);
+		};
+		_reg();
+	},
+	Reuleaux_triangle		: function(ctx){
+		var ang = 0, dis = this;
+		var _R_triangle = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.Reuleaux_triangle(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_R_triangle, 30);
+		};
+		_R_triangle();
+	},
+	rhombus					: function(ctx){
+		var ang = 0, dis = this;
+		var _rhombus = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.rhombus(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_rhombus, 30);
+		};
+		_rhombus();
+	},
+	sector					: function(ctx){
+		var ang = 0, dis = this;
+		var _sector = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.sector(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_sector, 30);
+		};
+		_sector();
+	},
+	segment					: function(ctx){
+		var ang = 0, dis = this;
+		var _segment = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.segment(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_segment, 30);
+		};
+		_segment();
+	},
+	semicircle				: function(ctx){
+		var ang = 0, dis = this;
+		var _semicircle = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.semicircle(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_semicircle, 30);
+		};
+		_semicircle();
+	},
+	square					: function(ctx){
+		var ang = 0, dis = this;
+		var _square = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.n_gon(ctx, 4, ang, (.2 + .8 * abs(sin(ang * pi))) * 100);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_square, 30);
+		};
+		_square();
+	},
+	star					: function(ctx){
+		var ang = 0, dis = this;
+		var _star = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.n_pointStar(ctx, 5, ang,	(.2 + .8 * abs(sin(ang * pi))) * 100,
+												(.1 + (2/3) * abs(sin(ang * Math.E))));
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_star, 30);
+		};
+		_star();
+	},
+	star7					: function(ctx){
+		var ang = 0, dis = this;
+		var _star = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.n_pointStar(ctx, 7, ang,	(.2 + .8 * abs(sin(ang * pi))) * 100,
+												(.1 + (2/3) * abs(sin(ang * Math.E))));
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_star, 30);
+		};
+		_star();
+	},
+	trapezoid				: function(ctx){
+		var ang = 0, dis = this;
+		var _trapezoid = function(){
+			ani._pre.call(dis, ctx);
+			drawShape.trapezoid(ctx, ang);
+			ani._post.call(dis, ctx);
+			ang += .05;
+			setTimeout(_trapezoid, 30);
+		};
+		_trapezoid();
+	},
+	triangle				: function(ctx){
+		var dis = this, pts = ani._pts(3);
+		var _triangle = function(){
+			ani._pre.call(dis, ctx);
+			pts = ani._drift.call(dis,pts);
+			for(var i = 0; i < pts.length; i++){
+				ctx[i?'lineTo':'moveTo'](pts[i][0], pts[i][1]);
+			}
+			ani._post.call(dis, ctx);
+			setTimeout(_triangle, 30);
+		};
+		_triangle();
+	},
+};
+drawShape = {
+	_showPoints				: function(ctx, pts){
+		ctx.strokeStyle = '#AAA';
+		for(var i = 0; i < pts.length; i++){
+			ctx.arc(pts[i][0], pts[i][1], 3, 0, pi2);
+			ctx.stroke();
+			ctx.beginPath();
+		}
+		ctx.strokeStyle = '#000';
+	},
+	arch					: function(ctx){
+		ctx.arc(220, 100, 50, pi, pi2);
+		ctx.lineTo(270,240);
+		ctx.lineTo(170,240);
+	},
+	cardioid				: function(ctx, start){
+		start = start || 0
+		drawShape.Cartesian_oval(ctx, start + pi14, 60, 75, 0.5);
+	},
+	Cartesian_oval			: function(ctx, start, res, size, scale){
+		res = abs(res) || 60;
+		start = start || pi14;
+		size = size || 60;
+		scale = scale || 1;
+		var ang = 0, step = pi2 / res;
+		var r1 = size, r2 = r1 * scale;
+		ctx.moveTo(	220 + cos(start + ang) * r1 + cos(ang + ang) * r2,
+					150 + sin(start + ang) * r1 + sin(ang + ang) * r2);
+		for(var i = 1; i < res; i++){
+			ang += step;
+			ctx.lineTo(	220 + cos(start + ang) * r1 + cos(ang + ang) * r2, 
+						150 + sin(start + ang) * r1 + sin(ang + ang) * r2);
+		}
+	},
+	Cassini_oval			: function(ctx, start, br){
+		start = start || 0;
+		br = br || 1.1;
+		const a = 120; // Half-distance between foci
+		const b = a * br; // (b > a gives a single loop, b = a gives a lemniscate, b < a dosn't work)
+		const res = 360000;
+		const step = pi2 / res;
+
+		var theta;
+		for (var i = 0; i <= res; i++) {
+			theta = start + (pi2 * i) / res;
+
+			// Calculate parts of the polar equation
+			const cos2Theta = cos(2 * theta);
+			const sin2Theta = sin(2 * theta);
+			const discriminant = pow(b, 4) - pow(a, 4) * pow(sin2Theta, 2);
+			if(discriminant < 0) continue;
+
+			// Calculate the two possible values for r^2
+			const r2_plus  = pow(a, 2) * cos2Theta + sqrt(discriminant);
+//			const r2_minus = pow(a, 2) * cos2Theta - sqrt(discriminant);
+
+			// Plot the positive root
+			if (r2_plus >= 0) {
+				const r = sqrt(r2_plus);
+				const x = 220 + r * cos(theta);
+				const y = 150 + r * sin(theta);
+				ctx[i ? 'lineTo' : 'moveTo'](x, y);
+			}
+		}
+	},
+	chevron					: function(ctx, thick, slant, width){
+		thick = abs(thick) || 100;
+		slant = slant || 1;
+		width = width || 150;
+		var hslant = slant / 2
+		ctx.moveTo(220,			(150 - slant * 100) - (0.5 - hslant) * thick);
+		ctx.lineTo(220 - width,	(150 + slant * 100) - (0.5 + hslant) * thick);
+		ctx.lineTo(220 - width,	(150 + slant * 100) + (0.5 - hslant) * thick);
+		ctx.lineTo(220,			(150 - slant * 100) + (0.5 + hslant) * thick);
+		ctx.lineTo(220 + width,	(150 + slant * 100) + (0.5 - hslant) * thick);
+		ctx.lineTo(220 + width,	(150 + slant * 100) - (0.5 + hslant) * thick);
+
+/*		// When slant = 1
+		ctx.moveTo(220, 50);
+		ctx.lineTo( 70,250 - thick);
+		ctx.lineTo( 70,250);
+		ctx.lineTo(220, 50 + thick);
+		ctx.lineTo(370,250);
+		ctx.lineTo(370,250 - thick);
+ */
+	},
+	circle					: function(ctx, r){
+		r = r || 100
+		ctx.arc(220, 150, r, 0, pi2);
+	},
+	cool_s					: function(ctx){
+		ctx.moveTo(215,125);
+		ctx.lineTo(190,100);
+		ctx.lineTo( 80,100);
+		ctx.lineTo( 30,150);
+		ctx.lineTo( 80,200);
+		ctx.lineTo(190,200);
+		ctx.lineTo(240,150);
+		ctx.lineTo(360,150);
+		ctx.moveTo(215,175);
+		ctx.lineTo(240,200);
+		ctx.lineTo(360,200);
+		ctx.lineTo(410,150);
+		ctx.lineTo(360,100);
+		ctx.lineTo(240,100);
+		ctx.lineTo(190,150);
+		ctx.lineTo( 80,150);
+		ctx.moveTo(215,125);
+	},
+	crescent				: function(ctx, ang){
+		if(undefined == ang){
+			ctx.arc(220,150,100,3.55,pi*2.36);
+			ctx.arc(170,200,100,pi*2.135,4.5,1);
+		} else {
+			ang = ang || 1;	ang = 2;
+			var radius = 80; // 60 + cos(ang / pi) * 45;
+			var a = ang, b = (ang * Math.E);
+			while(a > pi2 && a > pi2){ a -= pi2; b -= pi2; }
+			if(b < a){ var temp = a; a = b; b = temp; }
+			while(a < b + pi2){ b -= pi2; }
+			var c = (a + b) / 2;
+			var d = abs(a - b);
+			console.log([a,b].join(','));
+			ctx.arc(220,150,radius,a,b);
+//			ctx.arc(220 - cos(c) * radius * 2.43,150 - sin(c) * radius * 2.43,radius * 2.5, -8.6 ,3.4 ,1);	// ang = 1, radius * 2.5
+//			ctx.arc(220 - cos(c) * radius * 1.87,150 - sin(c) * radius * 1.87,radius * 2.0, -8.4 ,3.25,1);	// ang = 1, radius * 2.0
+//			ctx.arc(220 - cos(c) * radius * 1.25,150 - sin(c) * radius * 1.25,radius * 1.5, -8.2 ,3.1 ,1);	// ang = 1, radius * 1.5
+//			ctx.arc(220 - cos(c) * radius * 1.00,150 - sin(c) * radius * 1.00,radius * 1.3, -8.0 ,3.0 ,1);	// ang = 1, radius * 1.3
+//			ctx.arc(220 - cos(c) * radius * 0.65,150 - sin(c) * radius * 0.65,radius * 1.1, -7.8 ,2.6 ,1);	// ang = 1, radius * 1.1
+			ctx.arc(220 - cos(c) * radius * 0.2 ,150 - sin(c) * radius * 0.2 ,radius * 1.0, b,2.0 ,1);	// ang = 1, radius * 0.9
+//			ctx.arc(220 - cos(c) * radius * 1.9 ,150 - sin(c) * radius * 1.9 ,radius * 2.0, -8.35,3.25,1);	// ang = 2, radius * 2.0
+		}
+	},
+	egg						: function(ctx, start, ar){
+		ar = ar || 1.5;
+		var ang = start || 0, step = pi2 / 60;
+		ctx.moveTo(220 + cos(ang) * 100 * ar + sin(ang*2 + pih) * 10,150 + sin(ang) * 100);
+		for(var i = 1; i <= 60; i++){
+			ang += step;
+			ctx.lineTo(220 + cos(ang) * 100 * ar + sin(ang*2 + pih) * 10,150 + sin(ang) * 100);
+		};
+	},
+	ellipse					: function(ctx){
+		ctx.ellipse(220, 150, 170, 100, 0, 0, pi2);
+	},
+	heart					: function(ctx){
+		ctx.arc(170, 100, 50, pi34 + 0.2, pi2 - 0.3);
+		ctx.lineTo(220,100);
+		ctx.arc(270, 100, 50, pi + 0.3, pi14 - 0.2);
+		ctx.lineTo(220,250);
+	},
+	hexagon					: function(ctx){
+		drawShape.n_gon(ctx, 6);
+	},
+	kite					: function(ctx, ang){
+		ang = ang || 0.1;
+		var sinA = sin(ang), cosA = cos(ang), sinH = sin(ang + pih), cosH = cos(ang + pih);
+		var radius = 60 + (sin(ang * 2 + pi38) + 1) * 40;
+		var subrad = sin(ang * pi) * radius * .5;
+		var offset = 0.05 + 0.9 * sin(ang * Math.E);
+		ctx.moveTo(220 + cosA * radius							,145 + sinA * radius);
+		ctx.lineTo(220 + cosA * radius * offset + cosH * subrad	,145 + sinA * radius * offset + sinH * subrad);
+		ctx.lineTo(220 - cosA * radius							,145 - sinA * radius);
+		ctx.lineTo(220 + cosA * radius * offset - cosH * subrad	,145 + sinA * radius * offset - sinH * subrad);
+	},
+	lemniscate				: function(ctx, ang){
+		drawShape.Cassini_oval(ctx, ang, 1);
+	},
+	n_gon					: function(ctx, n, start, radius){
+		if(n < 3) throw new Error("<b>n_gon</b> requires at least 3 sides.");
+		if(n != round(n)) throw new Error("<b>n_gon</b> requires an integer number of points.");
+		start = start || 0;
+		radius = radius || 100;
+		var ang = start;
+		ctx.moveTo(220 + cos(ang) * radius,150 + sin(ang) * radius);
+		var step = pi2 / n;
+		while((ang += step) < pi2 + start){
+			ctx.lineTo(220 + cos(ang) * radius,150 + sin(ang) * radius);
+		}
+	},
+	n_pointStar				: function(ctx, n, start, size, scale){
+		if(n < 2) throw new Error("<b>n_pointStar</b> requires at least 2 points.");
+		if(n != round(n)) throw new Error("<b>n_star</b> requires an integer number of points.");
+		start = start || 0;
+		size = size || 100;
+		scale = scale || 0.38;
+		var step = pi2 / n / 2, ang = start, radius = size; 
+		ctx.moveTo(220 + cos(ang) * radius,150 + sin(ang) * radius);
+		for(var i = 1; i <= n * 2; i++){
+			ang += step;
+			var thisRadius = (i % 2) ? (radius * scale) : radius;
+			ctx.lineTo(220 + cos(ang) * thisRadius,150 + sin(ang) * thisRadius);
+		}
+	},
+	n_lineStar				: function(ctx, n, start){
+		if(n < 5) throw new Error("<b>n_lineStar</b> requires at least 5 points.");
+		if(!(n%2)) throw new Error("<b>n_lineStar</b> requires an odd number of points.");
+		start = start || 0;
+		var step = pi2 / n, pts = new Array(n), point = 0;
+		pts[0] = true;
+		var ang = start;
+		ctx.moveTo(220 + cos(ang) * 100,150 + sin(ang) * 100);
+		while(!pts.and()){
+			point = (point + 2) % n;
+			ang = start + step * point;
+			pts[point] = true;
+			ctx.lineTo(220 + cos(ang) * 100,150 + sin(ang) * 100);
+		}
+	},
+	octagon					: function(ctx){
+		drawShape.n_gon(ctx, 8, pi/8);
+	},
+	oval					: function(ctx){
+		var ang = 0, step = pi2 / 60, r = 120 + sin(ang * 2 + pih) * 15;
+		ctx.moveTo(220 + cos(ang) * r, 150 + sin(ang) * r);
+		for(var i = 0; i <= 60; i++){
+			ang += step;
+			r = 120 + sin(ang * 2 + pih) * 15;
+			ctx.lineTo(220 + cos(ang) * r, 150 + sin(ang) * r);
+		}	
+	},
+	ovoid					: function(ctx, start, ar){
+		ar = ar || 1.5;
+		var ang = start || 0, step = pi2 / 60;
+		ctx.moveTo(220 + cos(ang) * 100 * ar + sin(ang*2) * 20,150 + sin(ang) * 100);
+		for(var i = 1; i <= 60; i++){
+			ang += step;
+			ctx.lineTo(220 + cos(ang) * 100 * ar + sin(ang*2) * 20,150 + sin(ang) * 100);
+		};
+	},
+	parallelogram			: function(ctx, ang){
+		var width = 10 + abs(sin(ang * Math.E)) * 90;
+		var slant = sin(ang * pi) * 90;
+		var thick = 10 + sin(ang) * 38;
+		ctx.moveTo(158 - slant + thick,150 - width);
+		ctx.lineTo(276 - slant - thick,150 - width);
+		ctx.lineTo(276 + slant - thick,150 + width);
+		ctx.lineTo(158 + slant + thick,150 + width);
+	},
+	pentagon				: function(ctx){
+		drawShape.n_gon(ctx, 5, -pi/10);
+	},
+	quadrant				: function(ctx, ang){
+		ang = ang || 0;
+		var radius = 15 + (cos(ang * pi) + 1) * 45;
+		ctx.moveTo(220,150);
+		ctx.arc(220,150,radius,ang + pi,ang + pi32);
+	},
+	quadrilateral			: function(ctx){
+		ctx.moveTo(170, 50);
+		ctx.lineTo(370,220);
+		ctx.lineTo(270,250);
+		ctx.lineTo( 70,200);
+	},
+	rectangle				: function(ctx){
+		ctx.moveTo( 70, 50);
+		ctx.lineTo(370, 50);
+		ctx.lineTo(370,250);
+		ctx.lineTo( 70,250);
+	},
+	regular_polygon			: function(ctx, n, start, radius){
+		n = abs(round(n)) || 4;
+		start = start || undefined;
+		radius = radius || undefined;
+		drawShape.n_gon(ctx, n, start, radius);
+	},
+	Reuleaux_triangle		: function(ctx, start){
+		var ang = start || 0, step = pi2 / 3;
+		ang += pi/6;
+		var pts = [
+			220 + cos(ang           ) * 100,150 + sin(ang           ) * 100,
+			220 + cos(ang + step    ) * 100,150 + sin(ang + step    ) * 100,
+			220 + cos(ang + step * 2) * 100,150 + sin(ang + step * 2) * 100
+		];
+		ctx.arc(pts[0],pts[1],175,ang+pi*5/6,ang+pi*7/6);
+		ang += step;
+		ctx.arc(pts[2],pts[3],175,ang+pi*5/6,ang+pi*7/6);
+		ang += step;
+		ctx.arc(pts[4],pts[5],175,ang+pi*5/6,ang+pi*7/6);
+	},
+	rhombus					: function(ctx, ang){
+		var r = 90 + sin(ang) * 30;
+		var slide = sin(ang * pi / 10) * pi2;
+		var pts = [[abs(cos(ang)) * r, abs(sin(ang)) * r]];
+		pts[1] = [pts[0][0] + cos(slide) * r, pts[0][1] + sin(slide) * r];
+		pts[2] = [pts[1][0] + cos(ang + pi) * r, pts[1][1] + sin(ang + pi) * r];
+		pts[3] = [pts[2][0] + cos(slide + pi) * r, pts[2][1] + sin(slide + pi) * r];
+		var center = ani._center(pts);
+		center.x = 220 - center.x;
+		center.y = 150 - center.y;
+		for(var i = 0; i < 4; i++){
+			ctx[i?'lineTo':'moveTo'](center.x + pts[i][0], center.y + pts[i][1]);
+		}
+	},
+	sector					: function(ctx, ang){
+		ang = ang || 0;
+		var radius = 60 + cos(ang / pi) * 45;
+		var a = ang, b = (ang * Math.E);
+		while(a > pi2 && a > pi2){ a -= pi2; b -= pi2; }
+		if(b < a){ var temp = a; a = b; b = temp; }
+		while(a < b + pi2){ b -= pi2; }
+		ctx.moveTo(220,150);
+		ctx.arc(220,150,radius,a,b);
+	},
+	segment					: function(ctx, ang){
+		ang = ang || 1;
+		var radius = 60 + cos(ang / pi) * 45;
+		var a = ang, b = (ang * Math.E);
+		while(a > pi2 && a > pi2){ a -= pi2; b -= pi2; }
+		if(b < a){ var temp = a; a = b; b = temp; }
+		while(a < b + pi2){ b -= pi2; }
+		ctx.arc(220,150,radius,a,b);
+	},
+	semicircle				: function(ctx, ang){
+		ang = ang || 0;
+		var radius = 10 + (cos(ang * pi) + 1) * 50;
+		ctx.arc(220,150,radius,ang + pi,ang + pi2);
+	},
+	square					: function(ctx){
+		ctx.moveTo(120, 50);
+		ctx.lineTo(320, 50);
+		ctx.lineTo(320,250);
+		ctx.lineTo(120,250);
+	},
+	stadium					: function(ctx){
+		ctx.arc(170, 150, 100, pih, pi32);
+		ctx.arc(270, 150, 100, pi32, pi2 + pih);
+	},
+	star					: function(ctx){
+		drawShape.n_pointStar(ctx, 5, -pi/10);
+	},
+	star7					: function(ctx){
+		drawShape.n_pointStar(ctx, 7, pi/14);
+	},
+	superellipse			: function(ctx){
+		const res = 100, step = pi2 / res, exp = 4 / 7;
+		for(var i = 0; i <= res; i++){
+			var t = i * step, cost = cos(t), sint = sin(t);
+			const x = 150 * Math.sign(cost) * Math.pow(Math.abs(cost), exp);
+			const y = 100 * Math.sign(sint) * Math.pow(Math.abs(sint), exp);
+			ctx[i ? 'lineTo' : 'moveTo'](220 + x, 150 + y);
+		}
+	},
+	teardrop				: function(ctx){
+		ctx.arc(220, 170, 66, -pi316, pi + pi316);
+		ctx.lineTo(220,60);
+	},
+	this_thing				: function(ctx){
+		var pi12 = pi / 12;
+		ctx.arc(220 + cos(pi2 * 3 / 12) * 100,180 + sin(pi2 * 3 / 12) * 100,124,pi12 * 13,pi2 - pi12);
+		ctx.arc(220 + cos(pi2 *11 / 12) * 100,180 + sin(pi2 *11 / 12) * 100,124,pih - pi12,pi54);
+		ctx.arc(220 + cos(pi2 * 7 / 12) * 100,180 + sin(pi2 * 7 / 12) * 100,124,-pi14,pih + pi12);
+	},
+	trapezoid				: function(ctx, ang){
+		ang = ang || 0;
+		var sinA = sin(ang), cosA = cos(ang), sinH = sin(ang + pih), cosH = cos(ang + pih);
+		var radius = 25 + (sin(ang * 2 + pi38) + 1) * 60;
+		var subrad = sin(ang * pi) * radius * .5;
+		var offset = 0.4 + 0.3 * (sin(ang * Math.E) + 1);
+		var offset2 = 0.8 + 0.2 * sin(ang * pi);
+		ctx.moveTo(220 + cosA * radius * offset + cosH * subrad	,145 + sinA * radius * offset + sinH * subrad);
+		ctx.lineTo(220 - cosA * radius * offset2 + cosH * subrad	,145 - sinA * radius * offset2 + sinH * subrad);
+		ctx.lineTo(220 - cosA * radius - cosH * subrad	,145 - sinA * radius - sinH * subrad);
+		ctx.lineTo(220 + cosA * radius - cosH * subrad	,145 + sinA * radius - sinH * subrad);
+	},
+	triangle				: function(ctx){
+		ctx.moveTo(170, 50);
+		ctx.lineTo(370,250);
+		ctx.lineTo( 70,250);
+	},
+	vesica_piscis			: function(ctx){
+		var adj = pi * 0.5 / 3;
+		ctx.arc(220, 50,200,     adj, pi  - adj);
+		ctx.arc(220,250,200,pi + adj, pi2 - adj);
+	},
+};
+// The bottom edge/face is called a base. The upper edge/face is called the top edge/face or the "upper base"
+// a frustum can be a pyramidal frustum, a right conical frustum, or an oblique conical frustum 
+	//		(see also: truncated cone)
+HTMLCanvasElement.prototype.init = function(){
+	this.setAttribute('width',  145 * 3);
+	this.setAttribute('height', 110 * 3);
+	this.style.width  = '145px';
+	this.style.height = '110px';
+	var ctx = this.getContext('2d');
+	ctx.strokeStyle = '#000';
+	ctx.lineWidth = 3;
+	ctx.font = '30pt Arial';
+	var id = this.getAttribute('id');
+	if(ani[id]){
+		ani[id].call(this, ctx);
+	} else if(drawShape[id]){
+		ctx.globalCompositeOperation = 'source-over';
+		ctx.fillStyle = '#EEF';
+		ctx.fillRect(18,20,400,260);
+		ctx.fillStyle = '#FFF';
+		ctx.beginPath();
+		drawShape[id](ctx);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#000';
+		var text = this.getAttribute('rel');
+		if(!text || '' == text) text = id.replace('_', ' ');
+		ctx.fillText(text, 20, 315);
+	}
+	return this.ctx = ctx;
+};
+window.onload = function(){
+	$$('canvas').forEach(function(canvas){ canvas.init(); });
+};
+</script>
+</head><body>
+<h1>Planar/2D Shapes</h1>
+<div class='pad'>
+	<canvas id='rectangle'></canvas>
+	<canvas id='square'></canvas>
+	<canvas id='circle'></canvas>
+	<canvas id='regular_polygon'></canvas>
+	<canvas id='parallelogram'></canvas>
+	<canvas id='rhombus'></canvas>
+	<canvas id='kite'></canvas><!-- if concave, becomes a dart -->
+	<canvas id='trapezoid'></canvas><!-- trapezoid (or trapezium) types: isosceles, scalene, and right -->
+	<canvas id='triangle'></canvas>
+	<canvas id='quadrilateral'></canvas>
+	<canvas id='pentagon'></canvas>
+	<canvas id='hexagon'></canvas>
+	<canvas id='star' rel='star'></canvas>
+	<canvas id='chevron'></canvas>
+	<canvas id='semicircle'></canvas>
+	<canvas id='quadrant'></canvas>
+	<canvas id='sector'></canvas>
+	<canvas id='segment'></canvas>
+	<canvas id='crescent'></canvas><!-- a subtype of lune (any area between two arcs of a circle, inside one circle and outside another) -->
+	<canvas id='oval'></canvas>
+	<canvas id='egg'></canvas>
+	<canvas id='ellipse'></canvas>
+	<canvas id='stadium'></canvas><!-- two semi-circles attached to opposite ends of a rectangle -->
+	<canvas id='superellipse'></canvas>
+	<canvas id='ovoid'></canvas>
+	<canvas id='vesica_piscis' rel='lens'></canvas><!-- aka mandorla, the union part of a venn diagram -->
+	<canvas id='arch' rel='Roman arch'></canvas>
+	<canvas id='heart'></canvas><!-- bisect a stadium diagonally, rotate half to make heart -->
+	<canvas id='teardrop'></canvas>
+	<canvas id='Reuleaux_triangle'></canvas><!-- the Reuleaux polygon family includes n = 1 + 2z sides where z is natural number -->
+	<canvas id='Cartesian_oval'></canvas>
+	<canvas id='Cassini_oval'></canvas>
+	<canvas id='cardioid'></canvas><!-- a cardioid and a Cartesian oval are both kinds of bicircular quartics -->
+	<canvas id='lemniscate'></canvas>
+	<canvas id='cool_s'></canvas>
+	<canvas id='this_thing' rel='Quest for Camelot'></canvas><!-- essentially a trefoil knot -->
+	<!-- self-crossing shapes: hourglass (aka bowtie), antiparallelogram  -->
+	<!-- arc shapes: ring, lune, arbelos, salinon, yin-yang (aka tao) -->
+	<!-- open curves: parabola, hyperbola, the folium of Descartes, the Witch of Agnesi, various spirals, Bézier Curve, various splines -->
+	<!-- polar curves: Limaçon (aka Pascal's Snail), rose curve (aka rhodonea) [basically, spirographs] -->
+</div>
+<h1>Spacial/3D Shapes</h1>
+<div class='pad'>
+	<canvas id='cube'></canvas>
+	<canvas id='rectprism'></canvas>
+	<canvas id='triprism'></canvas>
+	<canvas id='paraprism'></canvas>
+	<canvas id='cyclindar'></canvas>
+	<canvas id='anyprism'></canvas>
+	<canvas id='ring'></canvas>
+	<canvas id='anyring'></canvas>
+	<canvas id='tetrahedron'></canvas>
+	<canvas id='octahedron'></canvas>
+	<canvas id='dodecahedron'></canvas>
+	<canvas id='icohedron'></canvas>
+	<canvas id='icododecahedron'></canvas>
+	<canvas id='pyramid'></canvas>
+	<canvas id='cone'></canvas>
+	<canvas id='basepoint'></canvas>
+	<canvas id='frustum'></canvas>
+	<canvas id='sphere'></canvas>
+	<canvas id='torus'></canvas>
+	<canvas id='ellipsoid'></canvas>
+	<!-- Archemedian solids -->
+</div>
+</body></html>
